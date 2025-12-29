@@ -1,7 +1,7 @@
 # Chess Training Platform - Development Checklist
 
 ## Phase 1: Foundation & Setup
-- [ ] Initialize Next.js project with TypeScript and App Router
+- [x] Initialize Next.js project with TypeScript and App Router
 - [ ] Configure Tailwind CSS with dark-mode-first design system
 - [ ] Set up project structure (components, engine, logic, state, styles)
 - [ ] Install core dependencies (chess.js, Zustand, Stockfish.js)
