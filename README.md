@@ -109,7 +109,7 @@ If Magnus Carlsen used a training app, it would feel closer to this than anythin
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/chessy.git
+git clone https://github.com/youneedgreg/chessy.git
 cd chessy
 
 # Install dependencies
