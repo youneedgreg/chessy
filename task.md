@@ -2,10 +2,10 @@
 
 ## Phase 1: Foundation & Setup
 - [x] Initialize Next.js project with TypeScript and App Router
-- [ ] Configure Tailwind CSS with dark-mode-first design system
-- [ ] Set up project structure (components, engine, logic, state, styles)
-- [ ] Install core dependencies (chess.js, Zustand, Stockfish.js)
-- [ ] Create design tokens and base styling system
+- [x] Configure Tailwind CSS with dark-mode-first design system
+- [x] Set up project structure (components, engine, logic, state, styles)
+- [x] Install core dependencies (chess.js, Zustand, Stockfish.js)
+- [x] Create design tokens and base styling system
 
 ## Phase 2: Chess Engine Integration
 - [ ] Integrate Stockfish WASM with Web Worker
