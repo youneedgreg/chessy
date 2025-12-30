@@ -1,4 +1,4 @@
-# Chess Training Platform
+# Chessy
 
 > **Fast, minimalist chess training that teaches correct thinking through immediate correction and principled feedback.**
 
