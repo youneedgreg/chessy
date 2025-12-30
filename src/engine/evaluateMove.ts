@@ -62,6 +62,10 @@ class StockfishEngine {
         }
     }
 
+    public setOption(name: string, value: string | number) {
+        this.sendCommand(`setoption name ${name} value ${value}`);
+    }
+
     public async evaluate(fen: string, depth = 15, multiPV = 1): Promise<EngineEvaluation> {
         return new Promise((resolve) => {
             // Reset state
