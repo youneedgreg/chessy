@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import ChessBoard from '@/components/ChessBoard';
+import { createBestMoveArrow, createTacticalArrows, Arrow } from '@/logic/arrows';
 import EvaluationBar from '@/components/EvaluationBar';
 import { Square } from 'chess.js';
 import { useGameStore } from '@/store/gameStore';
@@ -14,14 +15,29 @@ export default function PlayPage() {
         game,
         fen,
         makeMove,
-        undoMove, // New
+        undoMove,
         resetGame,
         difficulty,
         setDifficulty,
         evaluation,
         history,
-        result
+        result,
+        lastMoveAnalysis
     } = useGameStore();
+    // Compute arrows for the current position
+    const arrows: Arrow[] = useMemo(() => {
+        if (!lastMoveAnalysis) return [];
+        const move = lastMoveAnalysis.playerMove;
+        // UCI format: e2e4, e7e8q, etc.
+        const from = move.slice(0, 2);
+        const to = move.slice(2, 4);
+        const bestMoveArrow = evaluation && evaluation.bestMove ? createBestMoveArrow(from, to, difficulty) : null;
+        const tacticArrows = createTacticalArrows(lastMoveAnalysis.tacticalFlags, { from, to }, difficulty);
+        return [
+            ...(bestMoveArrow ? [bestMoveArrow] : []),
+            ...tacticArrows
+        ];
+    }, [lastMoveAnalysis, evaluation, difficulty]);
 
     // Initialize Engine
     useChessEngine();
@@ -103,6 +119,7 @@ export default function PlayPage() {
                             customSquareStyles={optionSquares}
                             onMouseOverSquare={onMouseOverSquare}
                             onMouseOutSquare={onMouseOutSquare}
+                            arrows={arrows}
                         />
                     </div>
                 </div>
