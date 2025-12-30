@@ -441,6 +441,13 @@ const LEVEL_CONFIGS = {
 - Subtle fades
 - No spinners or loaders unless >500ms
 
+**Responsive Design Philosophy**:
+- **Adaptive & Fluid**: The UI must not just "fit" smaller screens; it must feel *made* for them.
+- **Mobile-First**: Touch targets, navigation, and layout prioritized for mobile usage.
+- **Tablet Optimization**: utilize extra space meaningfully, not just scaling up mobile view.
+- **Desktop Experience**: robust controls and keyboard shortcuts, utilizing wide screens for analysis.
+- **No "Generic Shrinking"**: Layouts should re-flow and adapt completely (e.g., move list below board on mobile, side-by-side on desktop).
+
 ---
 
 ### Phase 11: Performance Optimization
