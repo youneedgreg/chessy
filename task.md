@@ -36,9 +36,9 @@
 - [x] Store mistake patterns for puzzle generation
 
 ## Phase 6: Explanation System (Rule-Based Alternative)
-- [ ] Create principle library (control center, piece activity, king safety, etc.)
-- [ ] Build rule-based explanation generator
-- [ ] Map tactical patterns to explanations
+- [x] Create principle library (control center, piece activity, king safety, etc.)
+- [x] Build rule-based explanation generator
+- [x] Map tactical patterns to explanations
 - [ ] Create opening principle database
 - [ ] Implement endgame rule explanations
 
@@ -87,5 +87,8 @@
 - [ ] Export PGN functionality
 - [ ] Multiplayer mode
 - [ ] Flip the board and play another color
+- [ ] Arrow bug
+- [ ] Smooth piece movement animations (300ms cubic-bezier) are now supported in the ChessBoard component, with an option to disable them for accessibility. Next steps: test on various devices and add a user-accessible toggle. Let me know if you want the toggle in the main UI or settings.
+
 
 
