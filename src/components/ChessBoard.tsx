@@ -111,8 +111,8 @@ export default function ChessBoard({
                     squareStyles: mergedSquareStyles,
                     onMouseOverSquare: onMouseOverSquare ? ({ square }) => onMouseOverSquare(square) : undefined,
                     onMouseOutSquare: onMouseOutSquare ? ({ square }) => onMouseOutSquare(square) : undefined,
+                    onSquareClick: (square: string) => handleSquareClick(square),
                 }}
-                onSquareClick={({ square }: { square: string }) => handleSquareClick(square)}
             />
             {/* Render arrows as SVG overlays */}
             <svg
