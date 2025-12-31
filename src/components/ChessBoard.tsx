@@ -109,24 +109,31 @@ export default function ChessBoard({
                                 x2={x2}
                                 y2={y2}
                                 stroke={arrow.color}
-                                strokeWidth={0.18}
+                                strokeWidth={0.09}
                                 strokeDasharray={arrow.style === 'dashed' ? '0.2 0.2' : undefined}
-                                opacity={0.85}
+                                opacity={0.95}
                                 markerEnd={`url(#arrowhead-${idx})`}
+                                filter="url(#arrow-glow)"
                             />
                             <marker
                                 id={`arrowhead-${idx}`}
-                                markerWidth={0.6}
-                                markerHeight={0.6}
-                                refX={0.3}
-                                refY={0.3}
+                                markerWidth={0.5}
+                                markerHeight={0.5}
+                                refX={0.25}
+                                refY={0.25}
                                 orient="auto"
                                 markerUnits="strokeWidth"
                             >
-                                <polygon points="0,0 0.6,0.3 0,0.6 0.15,0.3" fill={arrow.color} />
+                                <polygon points="0,0 0.5,0.25 0,0.5 0.12,0.25" fill={arrow.color} />
                             </marker>
                         </g>
                     );
+                                {/* SVG filter for subtle glow */}
+                                <defs>
+                                    <filter id="arrow-glow" x="-50%" y="-50%" width="200%" height="200%">
+                                        <feDropShadow dx="0" dy="0" stdDeviation="0.07" floodColor="#000" floodOpacity="0.18" />
+                                    </filter>
+                                </defs>
                 })}
             </svg>
         </div>
