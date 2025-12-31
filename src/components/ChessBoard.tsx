@@ -57,6 +57,43 @@ export default function ChessBoard({
     const darkSquareStyle = { backgroundColor: '#779952' };
     const lightSquareStyle = { backgroundColor: '#edeed1' };
 
+    // Click-to-move state
+    const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+    const [clickStyles, setClickStyles] = useState<Record<string, React.CSSProperties>>({});
+
+    // Handle square click
+    const handleSquareClick = (square: string) => {
+        if (!selectedSquare) {
+            setSelectedSquare(square);
+            setClickStyles({
+                [square]: {
+                    boxShadow: '0 0 0 3px #ffd700',
+                    background: 'rgba(255,255,0,0.2)',
+                },
+            });
+        } else if (selectedSquare === square) {
+            setSelectedSquare(null);
+            setClickStyles({});
+        } else {
+            // Try to make move
+            if (onPieceDrop && onPieceDrop(selectedSquare, square)) {
+                setSelectedSquare(null);
+                setClickStyles({});
+            } else {
+                // Invalid move, keep selection
+                setClickStyles({
+                    [selectedSquare]: {
+                        boxShadow: '0 0 0 3px #ff1744',
+                        background: 'rgba(255,0,0,0.1)',
+                    },
+                });
+            }
+        }
+    };
+
+    // Merge customSquareStyles and clickStyles
+    const mergedSquareStyles = { ...customSquareStyles, ...clickStyles };
+
     return (
         <div
             ref={wrapperRef}
@@ -71,10 +108,11 @@ export default function ChessBoard({
                     lightSquareStyle: lightSquareStyle,
                     animationDurationInMs: 200,
                     onPieceDrop: handlePieceDrop,
-                    squareStyles: customSquareStyles,
+                    squareStyles: mergedSquareStyles,
                     onMouseOverSquare: onMouseOverSquare ? ({ square }) => onMouseOverSquare(square) : undefined,
                     onMouseOutSquare: onMouseOutSquare ? ({ square }) => onMouseOutSquare(square) : undefined,
                 }}
+                onSquareClick={({ square }: { square: string }) => handleSquareClick(square)}
             />
             {/* Render arrows as SVG overlays */}
             <svg
@@ -84,7 +122,7 @@ export default function ChessBoard({
                 style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
             >
                 {arrows.map((arrow, idx) => {
-                    // Convert square to board coordinates (0-7)
+                    // ...existing code...
                     const squareToCoords = (sq: string) => {
                         const file = sq.charCodeAt(0) - 97;
                         const rank = 8 - parseInt(sq[1]);
@@ -128,13 +166,13 @@ export default function ChessBoard({
                             </marker>
                         </g>
                     );
-                                {/* SVG filter for subtle glow */}
-                                <defs>
-                                    <filter id="arrow-glow" x="-50%" y="-50%" width="200%" height="200%">
-                                        <feDropShadow dx="0" dy="0" stdDeviation="0.07" floodColor="#000" floodOpacity="0.18" />
-                                    </filter>
-                                </defs>
                 })}
+                {/* SVG filter for subtle glow */}
+                <defs>
+                    <filter id="arrow-glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feDropShadow dx="0" dy="0" stdDeviation="0.07" floodColor="#000" floodOpacity="0.18" />
+                    </filter>
+                </defs>
             </svg>
         </div>
     );

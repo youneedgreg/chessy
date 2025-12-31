@@ -86,4 +86,6 @@
 - [ ] Session analytics
 - [ ] Export PGN functionality
 - [ ] Multiplayer mode
+- [ ] Flip the board and play another color
+
 
