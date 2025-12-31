@@ -13,6 +13,7 @@ interface ChessBoardComponentProps {
     onMouseOverSquare?: (square: string) => void;
     onMouseOutSquare?: (square: string) => void;
     arrows?: Arrow[];
+    disableAnimations?: boolean; // Accessibility: disables piece movement animation
 }
 
 export default function ChessBoard({
@@ -23,6 +24,7 @@ export default function ChessBoard({
     onMouseOverSquare,
     onMouseOutSquare,
     arrows = [],
+    disableAnimations = false,
 }: ChessBoardComponentProps) {
     const wrapperRef = useRef<HTMLDivElement>(null);
     const [boardSize, setBoardSize] = useState(300);
@@ -106,13 +108,12 @@ export default function ChessBoard({
                     boardOrientation: boardOrientation,
                     darkSquareStyle: darkSquareStyle,
                     lightSquareStyle: lightSquareStyle,
-                    animationDurationInMs: 200,
+                    animationDurationInMs: disableAnimations ? 0 : 300,
                     onPieceDrop: handlePieceDrop,
                     squareStyles: mergedSquareStyles,
                     onMouseOverSquare: onMouseOverSquare ? ({ square }) => onMouseOverSquare(square) : undefined,
                     onMouseOutSquare: onMouseOutSquare ? ({ square }) => onMouseOutSquare(square) : undefined,
                     onSquareClick: ({ square }) => handleSquareClick(square),
-
                 }}
             />
             {/* Render arrows as SVG overlays */}
