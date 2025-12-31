@@ -82,14 +82,18 @@ export interface GameState {
         betterMove: string;
         evalDiff: number;
     }[];
-        // Move navigation (replay)
-        currentMoveIndex: number; // -1 means live/latest
+    // Move navigation (replay)
+    currentMoveIndex: number; // -1 means live/latest
+
+    // Redo stack for redo functionality
+    redoStack: { uci: string; san: string; fen: string; evaluation: EngineEvaluation | null }[];
 }
 
 export interface GameActions {
     // Moves
     makeMove: (source: string, target: string, promotion?: string) => boolean;
     undoMove: () => void;
+    redoMove: () => void;
     resetGame: () => void;
 
     // Settings

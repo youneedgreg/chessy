@@ -27,6 +27,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     mistakes: [],
     currentMoveIndex: -1, // -1 means live/latest
+    redoStack: [],
     setCurrentMoveIndex: (index) => {
         set({ currentMoveIndex: index });
     },
@@ -82,32 +83,50 @@ export const useGameStore = create<GameStore>((set, get) => ({
     },
 
     undoMove: () => {
-        const { game } = get();
-        const gameCopy = new Chess(game.fen());
-
-        // Undo last move (half-move)
-        const undo1 = gameCopy.undo();
-        if (!undo1) return; // No moves to undo
-
+        const { game, history, redoStack } = get();
+        if (history.length === 0) return;
+        // Remove last move from history and push to redoStack
+        const newHistory = history.slice(0, -1);
+        const undoneMove = history[history.length - 1];
+        const newRedoStack = [undoneMove, ...redoStack];
+        // Rebuild game state from newHistory
+        const gameCopy = new Chess();
+        newHistory.forEach(m => gameCopy.move(m.uci));
         set({
             game: gameCopy,
             fen: gameCopy.fen(),
             turn: gameCopy.turn(),
             isGameOver: false,
             result: null,
-            history: gameCopy.history({ verbose: true }).map((m, idx, arr) => ({
-                uci: m.lan,
-                san: m.san,
-                fen: (() => {
-                    const tempGame = new Chess();
-                    for (let i = 0; i <= idx; i++) {
-                        tempGame.move(arr[i]);
-                    }
-                    return tempGame.fen();
-                })(),
-                evaluation: null
-            })),
+            history: newHistory,
+            redoStack: newRedoStack,
             evaluation: null, // Clear eval on undo
+            lastMoveAnalysis: null,
+        });
+    },
+
+    redoMove: () => {
+        const { game, history, redoStack } = get();
+        if (redoStack.length === 0) return;
+        // Pop move from redoStack and add to history
+        const [redoMove, ...restRedo] = redoStack;
+        const newHistory = [...history, redoMove];
+        // Rebuild game state from newHistory
+        const gameCopy = new Chess();
+        newHistory.forEach(m => gameCopy.move(m.uci));
+        set({
+            game: gameCopy,
+            fen: gameCopy.fen(),
+            turn: gameCopy.turn(),
+            isGameOver: gameCopy.isGameOver(),
+            result: gameCopy.isGameOver()
+                ? (gameCopy.isCheckmate()
+                    ? (gameCopy.turn() === 'w' ? '0-1' : '1-0')
+                    : '1/2-1/2')
+                : null,
+            history: newHistory,
+            redoStack: restRedo,
+            evaluation: null, // Clear eval on redo
             lastMoveAnalysis: null,
         });
     },
