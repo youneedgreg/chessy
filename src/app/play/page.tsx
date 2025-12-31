@@ -7,7 +7,10 @@ import EvaluationBar from '@/components/EvaluationBar';
 import { Square } from 'chess.js';
 import { useGameStore } from '@/store/gameStore';
 import { useChessEngine } from '@/hooks/useChessEngine';
+
 import { LEVELS, DifficultyLevel } from '@/store/types';
+import FeedbackPanel from '@/components/FeedbackPanel';
+import { getTacticalDescription } from '@/logic/tactics';
 
 export default function PlayPage() {
     // Global Game State
@@ -126,6 +129,46 @@ export default function PlayPage() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [undoMove, redoMove, canRedo, history.length, difficulty]);
 
+    // Prepare feedback for Beginner level
+    let feedbackExplanation: string | undefined = undefined;
+    let feedbackDetails: string[] = [];
+    let feedbackTactics: string[] = [];
+    if (difficulty === 'beginner' && lastMoveAnalysis && game) {
+        // Use summary and details from lastMoveAnalysis if available
+        // Import generateExplanation dynamically to avoid circular deps
+        let explanationObj: any = undefined;
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+                        explanationObj = require('@/logic/explanations').generateExplanation(
+                                lastMoveAnalysis.evalDelta,
+                                lastMoveAnalysis.tacticalFlags,
+                                game,
+                                {
+                                    from: lastMoveAnalysis.playerMove.slice(0,2) as import('chess.js').Square,
+                                    to: lastMoveAnalysis.playerMove.slice(2,4) as import('chess.js').Square,
+                                    piece: game.get(lastMoveAnalysis.playerMove.slice(0,2) as import('chess.js').Square)?.type || ''
+                                }
+                        );
+        } catch {}
+        feedbackExplanation = explanationObj?.summary || (() => {
+            switch (lastMoveAnalysis.grade) {
+                case 'brilliant': return 'Excellent move! You found the best option.';
+                case 'good': return 'Good move. You are playing solidly.';
+                case 'inaccuracy': return 'This move is okay, but there was a better one.';
+                case 'mistake': return 'This move could be improved. Try to spot tactics or threats.';
+                case 'blunder': return 'Careful! This move loses material or allows a threat.';
+                default: return 'Move played.';
+            }
+        })();
+        feedbackDetails = explanationObj?.details || [];
+        if (lastMoveAnalysis.evalDelta !== undefined) {
+            feedbackDetails.unshift(`Evaluation change: ${(lastMoveAnalysis.evalDelta / 100).toFixed(2)} pawns.`);
+        }
+        if (lastMoveAnalysis.tacticalFlags && lastMoveAnalysis.tacticalFlags.length > 0) {
+            feedbackTactics = lastMoveAnalysis.tacticalFlags.map(getTacticalDescription);
+        }
+    }
+
     return (
         <div className="flex flex-col lg:flex-row h-screen w-full bg-background text-foreground overflow-hidden">
             {/* Main Board Area - Dominates the screen on mobile/tablet */}
@@ -153,15 +196,24 @@ export default function PlayPage() {
             </main>
 
             {/* Sidebar / Bottom Panel - Adapts to device */}
-            <aside className="
-                flex flex-col
-                w-full lg:w-96
-                h-[30vh] lg:h-full
-                border-t lg:border-t-0 lg:border-l border-text-secondary/20
-                bg-background p-4 lg:p-6
-                overflow-y-auto
-                gap-4
-            ">
+                        <aside className="
+                                flex flex-col
+                                w-full lg:w-96
+                                h-[30vh] lg:h-full
+                                border-t lg:border-t-0 lg:border-l border-text-secondary/20
+                                bg-background p-4 lg:p-6
+                                overflow-y-auto
+                                gap-4
+                        ">
+                                {/* Beginner Feedback Panel */}
+                                {difficulty === 'beginner' && (feedbackExplanation || feedbackTactics.length > 0) && (
+                                    <FeedbackPanel
+                                        explanation={feedbackExplanation}
+                                        details={feedbackDetails}
+                                        tactics={feedbackTactics}
+                                        calm
+                                    />
+                                )}
                 <div className="flex-shrink-0">
                     <h1 className="text-2xl font-bold font-sans mb-1">Stockfish Trainer</h1>
                     <div className="flex items-center gap-2 text-sm text-text-secondary">
