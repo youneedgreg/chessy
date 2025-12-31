@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import ChessBoard from '@/components/ChessBoard';
 import { createBestMoveArrow, createTacticalArrows, Arrow } from '@/logic/arrows';
 import EvaluationBar from '@/components/EvaluationBar';
@@ -16,6 +16,7 @@ export default function PlayPage() {
         fen,
         makeMove,
         undoMove,
+        redoMove,
         resetGame,
         difficulty,
         setDifficulty,
@@ -24,7 +25,8 @@ export default function PlayPage() {
         result,
         lastMoveAnalysis,
         currentMoveIndex,
-        setCurrentMoveIndex
+        setCurrentMoveIndex,
+        redoStack
     } = useGameStore();
     // Compute arrows: only show the best move suggested by the engine
     const arrows: Arrow[] = useMemo(() => {
@@ -95,6 +97,7 @@ export default function PlayPage() {
     };
 
     const canUndo = LEVELS[difficulty].allowUndo && history.length > 0;
+    const canRedo = redoStack.length > 0 && LEVELS[difficulty].allowUndo;
 
     // Move navigation logic
     const canGoBack = (currentMoveIndex ?? -1) > -1;
@@ -104,6 +107,24 @@ export default function PlayPage() {
     const displayFen = (currentMoveIndex !== -1 && history[currentMoveIndex])
         ? history[currentMoveIndex].fen
         : fen;
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
+                if (LEVELS[difficulty].allowUndo && history.length > 0) {
+                    e.preventDefault();
+                    undoMove();
+                }
+            } else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) {
+                if (canRedo) {
+                    e.preventDefault();
+                    redoMove();
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [undoMove, redoMove, canRedo, history.length, difficulty]);
 
     return (
         <div className="flex flex-col lg:flex-row h-screen w-full bg-background text-foreground overflow-hidden">
@@ -231,6 +252,23 @@ export default function PlayPage() {
                         disabled={currentMoveIndex === -1}
                         className="px-2 py-2 bg-text-secondary/10 hover:bg-text-secondary/20 disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs font-medium transition-colors"
                     >Live &#187;</button>
+                </div>
+
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                    <button
+                        onClick={undoMove}
+                        disabled={!canUndo}
+                        className="px-4 py-2 bg-text-secondary/10 hover:bg-text-secondary/20 disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs font-medium transition-colors"
+                    >
+                        Undo
+                    </button>
+                    <button
+                        onClick={redoMove}
+                        disabled={!canRedo}
+                        className="px-4 py-2 bg-text-secondary/10 hover:bg-text-secondary/20 disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs font-medium transition-colors"
+                    >
+                        Redo
+                    </button>
                 </div>
             </aside>
         </div>
