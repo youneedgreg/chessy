@@ -22,7 +22,9 @@ export default function PlayPage() {
         evaluation,
         history,
         result,
-        lastMoveAnalysis
+        lastMoveAnalysis,
+        currentMoveIndex,
+        setCurrentMoveIndex
     } = useGameStore();
     // Compute arrows: only show the best move suggested by the engine
     const arrows: Arrow[] = useMemo(() => {
@@ -94,6 +96,15 @@ export default function PlayPage() {
 
     const canUndo = LEVELS[difficulty].allowUndo && history.length > 0;
 
+    // Move navigation logic
+    const canGoBack = (currentMoveIndex ?? -1) > -1;
+    const canGoForward = (currentMoveIndex ?? -1) < history.length - 1;
+
+    // The FEN to display for the board (replay or live)
+    const displayFen = (currentMoveIndex !== -1 && history[currentMoveIndex])
+        ? history[currentMoveIndex].fen
+        : fen;
+
     return (
         <div className="flex flex-col lg:flex-row h-screen w-full bg-background text-foreground overflow-hidden">
             {/* Main Board Area - Dominates the screen on mobile/tablet */}
@@ -109,7 +120,7 @@ export default function PlayPage() {
 
                     <div className="w-full max-w-[min(80vh,100%)]">
                         <ChessBoard
-                            fen={fen}
+                            fen={displayFen}
                             onPieceDrop={onDrop}
                             customSquareStyles={optionSquares}
                             onMouseOverSquare={onMouseOverSquare}
@@ -161,8 +172,18 @@ export default function PlayPage() {
                             {Array.from({ length: Math.ceil(history.length / 2) }).map((_, i) => (
                                 <div key={i} className="flex col-span-2 items-center gap-2 border-b border-white/5 pb-1">
                                     <span className="w-6 text-[10px] text-gray-500">{i + 1}.</span>
-                                    <span className="flex-1 text-white font-medium">{history[i * 2]?.san}</span>
-                                    <span className="flex-1 text-gray-400">{history[i * 2 + 1]?.san || ''}</span>
+                                    <span
+                                        className={`flex-1 cursor-pointer ${currentMoveIndex === i * 2 ? 'text-accent font-bold underline' : 'text-white font-medium'}`}
+                                        onClick={() => setCurrentMoveIndex(i * 2)}
+                                    >
+                                        {history[i * 2]?.san}
+                                    </span>
+                                    <span
+                                        className={`flex-1 cursor-pointer ${currentMoveIndex === i * 2 + 1 ? 'text-accent font-bold underline' : 'text-gray-400'}`}
+                                        onClick={() => setCurrentMoveIndex(i * 2 + 1)}
+                                    >
+                                        {history[i * 2 + 1]?.san || ''}
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -189,23 +210,27 @@ export default function PlayPage() {
                     </div>
                 )}
 
-                <div className="mt-auto pt-4 border-t border-text-secondary/20 grid grid-cols-2 gap-2">
+                <div className="mt-auto pt-4 border-t border-text-secondary/20 grid grid-cols-4 gap-2">
                     <button
-                        onClick={undoMove}
-                        disabled={!canUndo}
-                        className="px-4 py-2 bg-text-secondary/10 hover:bg-text-secondary/20 disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs font-medium transition-colors"
-                    >
-                        Undo
-                    </button>
+                        onClick={() => setCurrentMoveIndex(0)}
+                        disabled={history.length === 0 || currentMoveIndex === 0}
+                        className="px-2 py-2 bg-text-secondary/10 hover:bg-text-secondary/20 disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs font-medium transition-colors"
+                    >&#171; Start</button>
                     <button
-                        onClick={handleReset}
-                        className="px-4 py-2 bg-text-secondary/10 hover:bg-text-secondary/20 rounded text-xs font-medium transition-colors"
-                    >
-                        Reset
-                    </button>
-                    <button className="col-span-2 px-4 py-3 bg-accent text-white hover:bg-accent/90 rounded text-sm font-bold transition-transform active:scale-95 shadow-lg">
-                        Analyze Game
-                    </button>
+                        onClick={() => setCurrentMoveIndex(Math.max(0, (currentMoveIndex ?? -1) - 1))}
+                        disabled={!canGoBack}
+                        className="px-2 py-2 bg-text-secondary/10 hover:bg-text-secondary/20 disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs font-medium transition-colors"
+                    >&#8249; Prev</button>
+                    <button
+                        onClick={() => setCurrentMoveIndex(Math.min(history.length - 1, (currentMoveIndex ?? -1) + 1))}
+                        disabled={!canGoForward}
+                        className="px-2 py-2 bg-text-secondary/10 hover:bg-text-secondary/20 disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs font-medium transition-colors"
+                    >Next &#8250;</button>
+                    <button
+                        onClick={() => setCurrentMoveIndex(-1)}
+                        disabled={currentMoveIndex === -1}
+                        className="px-2 py-2 bg-text-secondary/10 hover:bg-text-secondary/20 disabled:opacity-30 disabled:cursor-not-allowed rounded text-xs font-medium transition-colors"
+                    >Live &#187;</button>
                 </div>
             </aside>
         </div>

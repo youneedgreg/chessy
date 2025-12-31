@@ -26,6 +26,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     showEvalBar: true,
 
     mistakes: [],
+    currentMoveIndex: -1, // -1 means live/latest
+    setCurrentMoveIndex: (index) => {
+        set({ currentMoveIndex: index });
+    },
 
     // Actions
     makeMove: (source: string, target: string, promotion: string = 'q') => {
@@ -53,7 +57,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
                             ? (gameCopy.turn() === 'w' ? '0-1' : '1-0')
                             : '1/2-1/2')
                         : null,
-                    history: gameCopy.history({ verbose: true }).map(m => ({ uci: m.lan, san: m.san })),
+                    history: gameCopy.history({ verbose: true }).map((m, idx, arr) => ({
+                        uci: m.lan,
+                        san: m.san,
+                        fen: (() => {
+                            // Reconstruct FEN for each move
+                            const tempGame = new Chess();
+                            for (let i = 0; i <= idx; i++) {
+                                tempGame.move(arr[i]);
+                            }
+                            return tempGame.fen();
+                        })(),
+                        evaluation: null // To be filled after engine analysis
+                    })),
                     lastEvaluation: evaluation, // Save prev eval
                     evaluation: null, // Clear current eval until re-analysis
                 });
@@ -79,7 +95,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
             turn: gameCopy.turn(),
             isGameOver: false,
             result: null,
-            history: gameCopy.history({ verbose: true }).map(m => ({ uci: m.lan, san: m.san })),
+            history: gameCopy.history({ verbose: true }).map((m, idx, arr) => ({
+                uci: m.lan,
+                san: m.san,
+                fen: (() => {
+                    const tempGame = new Chess();
+                    for (let i = 0; i <= idx; i++) {
+                        tempGame.move(arr[i]);
+                    }
+                    return tempGame.fen();
+                })(),
+                evaluation: null
+            })),
             evaluation: null, // Clear eval on undo
             lastMoveAnalysis: null,
         });
@@ -129,5 +156,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     setLastMoveAnalysis: (analysis) => {
         set({ lastMoveAnalysis: analysis });
+    },
+
+    setMoveEvaluation: (moveIndex, evaluation) => {
+        set((state) => {
+            if (!state.history[moveIndex]) return {};
+            const updatedHistory = state.history.map((move, idx) =>
+                idx === moveIndex ? { ...move, evaluation } : move
+            );
+            return { history: updatedHistory };
+        });
     }
 }));
