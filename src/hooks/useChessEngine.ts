@@ -21,7 +21,8 @@ export function useChessEngine() {
         lastEvaluation,
         history,
         addMistake,
-        setLastMoveAnalysis
+        setLastMoveAnalysis,
+        setMoveEvaluation
     } = useGameStore();
 
     // Effect to update engine options when difficulty changes
@@ -45,8 +46,12 @@ export function useChessEngine() {
 
             // Analyze the move that just happened
             if (lastEvaluation && history.length > 0) {
-                const lastMove = history[history.length - 1]; // This is the move that led to current FEN
+                const lastMoveIdx = history.length - 1;
+                const lastMove = history[lastMoveIdx]; // This is the move that led to current FEN
                 const moveColor = turn === 'w' ? 'b' : 'w'; // The side that just moved
+
+                // Update evaluation for the last move in history
+                setMoveEvaluation(lastMoveIdx, evaluation);
 
                 // Detect tactics in the NEW position (did we miss a tactic? or did we create one?)
                 // Actually, tactics flags usually refer to the patterns present.

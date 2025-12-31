@@ -59,7 +59,7 @@ export interface GameState {
     turn: 'w' | 'b';
     isGameOver: boolean;
     result: string | null; // "1-0", "0-1", "1/2-1/2" or null
-    history: { uci: string; san: string }[]; // UCI for engine, SAN for UI
+    history: { uci: string; san: string; fen: string; evaluation: EngineEvaluation | null }[]; // UCI for engine, SAN for UI, FEN, and evaluation
 
     // Engine & Analysis
     evaluation: EngineEvaluation | null;
@@ -82,6 +82,8 @@ export interface GameState {
         betterMove: string;
         evalDiff: number;
     }[];
+        // Move navigation (replay)
+        currentMoveIndex: number; // -1 means live/latest
 }
 
 export interface GameActions {
@@ -101,6 +103,18 @@ export interface GameActions {
     setAnalyzing: (isAnalyzing: boolean) => void;
     addMistake: (mistake: GameState['mistakes'][0]) => void;
     setLastMoveAnalysis: (analysis: MoveAnalysis | null) => void;
+        /**
+         * Set the current move index for navigation/replay.
+         * @param index The move index to navigate to (-1 for latest)
+         */
+        setCurrentMoveIndex: (index: number) => void;
+
+    /**
+     * Set the evaluation for a move in the history by index.
+     * @param moveIndex Index of the move in history
+     * @param evaluation EngineEvaluation to set
+     */
+    setMoveEvaluation: (moveIndex: number, evaluation: EngineEvaluation) => void;
 }
 
 // Combined Store Type
