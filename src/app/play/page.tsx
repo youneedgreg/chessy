@@ -24,20 +24,15 @@ export default function PlayPage() {
         result,
         lastMoveAnalysis
     } = useGameStore();
-    // Compute arrows for the current position
+    // Compute arrows: only show the best move suggested by the engine
     const arrows: Arrow[] = useMemo(() => {
-        if (!lastMoveAnalysis) return [];
-        const move = lastMoveAnalysis.playerMove;
-        // UCI format: e2e4, e7e8q, etc.
-        const from = move.slice(0, 2);
-        const to = move.slice(2, 4);
-        const bestMoveArrow = evaluation && evaluation.bestMove ? createBestMoveArrow(from, to, difficulty) : null;
-        const tacticArrows = createTacticalArrows(lastMoveAnalysis.tacticalFlags, { from, to }, difficulty);
-        return [
-            ...(bestMoveArrow ? [bestMoveArrow] : []),
-            ...tacticArrows
-        ];
-    }, [lastMoveAnalysis, evaluation, difficulty]);
+        if (!evaluation || !evaluation.bestMove) return [];
+        const bestMove = evaluation.bestMove;
+        const from = bestMove.slice(0, 2);
+        const to = bestMove.slice(2, 4);
+        const bestMoveArrow = createBestMoveArrow(from, to, difficulty);
+        return bestMoveArrow ? [bestMoveArrow] : [];
+    }, [evaluation, difficulty]);
 
     // Initialize Engine
     useChessEngine();
