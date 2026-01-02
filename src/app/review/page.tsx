@@ -7,6 +7,9 @@ import ChessBoard from '@/components/ChessBoard';
 import GameSummary from '@/components/Review/GameSummary';
 import MistakesTimeline from '@/components/Review/MistakesTimeline';
 import AnalysisControls from '@/components/Review/AnalysisControls';
+import MistakeCard from '@/components/MistakeCard';
+import CategoryBadge from '@/components/Review/CategoryBadge';
+import { groupMistakes, getCategoryInfo, MistakeCategory, CategorizedMistake } from '@/logic/mistakeCategories';
 import ExplanationDrawer from '@/components/ExplanationDrawer';
 
 export default function ReviewPage() {
@@ -19,31 +22,15 @@ export default function ReviewPage() {
 
     // Initialize review
     useEffect(() => {
-        // Start at the beginning of the game for review? Or end?
-        // Let's start at the first mistake if any, otherwise start of game.
-        // For now, let's start at -1 (initial position).
         if (history.length > 0 && currentMoveIndex === -1) {
-            // We might want to persist the state from the previous game page, 
-            // so we don't force reset here unless we want to.
-            // But if currentMoveIndex is -1 (live), and game is over, maybe we want to keep it?
-            // Let's default to showing the result (end of game).
             setCurrentMoveIndex(history.length - 1);
         }
     }, []);
 
     const currentMove = currentMoveIndex >= 0 ? history[currentMoveIndex] : null;
+    const groupedMistakes = groupMistakes(history);
 
-    // Determine FEN to show
-    // If index is -1, show INITIAL_FEN (or whatever the start was)
-    // If index is i, show history[i].fen
-    const currentFen = currentMove ? currentMove.fen : (
-        // Fallback for index -1 (start)
-        // We need the initial FEN. The store has it but we might not export it directly easily
-        // actually history[0] has the fen AFTER move 0.
-        // We can create a new Chess() to get start fen?
-        // Or just hardcode standard start fen for now.
-        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-    );
+    const currentFen = currentMove ? currentMove.fen : 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
     return (
         <div className="min-h-screen bg-neutral-900 text-white p-4 md:p-8 flex flex-col items-center">
@@ -63,12 +50,8 @@ export default function ReviewPage() {
                         <ChessBoard
                             fen={currentFen}
                             disableAnimations={false}
-                            boardOrientation={useGameStore.getState().orientation} // Access direct state for non-reactive read or use hook
-                            // We need arrows for best move/mistakes?
-                            arrows={
-                                // TODO: Add arrows based on analysis
-                                []
-                            }
+                            boardOrientation={useGameStore.getState().orientation}
+                            arrows={[]}
                         />
                     </div>
                     <AnalysisControls />
@@ -94,7 +77,7 @@ export default function ReviewPage() {
                                 ${currentMove.analysis.grade === 'blunder' ? 'bg-red-500/20 text-red-400 border border-red-500/40' :
                                             currentMove.analysis.grade === 'mistake' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40' :
                                                 currentMove.analysis.grade === 'brilliant' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/40' :
-                                                    'bg-gray-500/20 text-gray-400'}
+                                                    'bg-gray-500/20 text gray-400'}
                             `}>
                                         {currentMove.analysis.grade}
                                     </div>
@@ -126,6 +109,44 @@ export default function ReviewPage() {
                         )}
                     </div>
                 </div>
+            </div>
+
+            {/* Mistakes Section - Grouped by Category */}
+            <div className="w-full max-w-6xl mt-8">
+                <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
+                    Mistake Analysis by Category
+                </h2>
+                {history.filter(m => m.analysis?.grade === 'mistake' || m.analysis?.grade === 'blunder').length > 0 ? (
+                    <div className="space-y-8">
+                        {Object.entries(groupedMistakes).map(([category, mistakes]) => {
+                            if (mistakes.length === 0) return null;
+                            const categoryKey = category as MistakeCategory;
+                            const categoryInfo = getCategoryInfo(categoryKey);
+
+                            return (
+                                <div key={category} className="space-y-4">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <CategoryBadge category={categoryKey} count={mistakes.length} />
+                                        <div className="flex-1 h-px bg-white/10"></div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {(mistakes as CategorizedMistake[]).map((mistake, idx) => (
+                                            <MistakeCard
+                                                key={`${category}-${idx}`}
+                                                move={mistake.move}
+                                                moveNumber={mistake.moveNumber}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="bg-white/5 rounded-xl p-8 text-center text-gray-500">
+                        No mistakes or blunders detected. Great job!
+                    </div>
+                )}
             </div>
         </div>
     );
