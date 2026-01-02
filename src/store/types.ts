@@ -1,7 +1,7 @@
 import { Chess, Move } from 'chess.js';
-import { EngineEvaluation, MoveAnalysis } from '../engine/types';
+import { EngineEvaluation, MoveAnalysis, TacticalFlag } from '../engine/types';
 
-export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced' | 'master';
+export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced' | 'master' | 'silent';
 
 export interface LevelConfig {
     depth: number;
@@ -49,8 +49,27 @@ export const LEVELS: Record<DifficultyLevel, LevelConfig> = {
         allowUndo: false,
         name: 'Master',
         description: 'Near perfect play. Maximum challenge.',
+    },
+    silent: {
+        depth: 25,
+        multiPV: 1,
+        skillLevel: 20,
+        errorProbability: 0.0,
+        allowUndo: false,
+        name: 'Silent',
+        description: 'Tournament mode: no feedback, no undo, strongest engine, post-game review only.',
     }
 };
+
+export interface MoveHistory {
+    uci: string;
+    san: string;
+    fen: string;
+    evaluation: EngineEvaluation | null;
+    analysis?: MoveAnalysis | null;
+    tacticalFlags?: TacticalFlag[];
+    explanation?: string;
+}
 
 export interface GameState {
     // Core Board State
@@ -59,7 +78,7 @@ export interface GameState {
     turn: 'w' | 'b';
     isGameOver: boolean;
     result: string | null; // "1-0", "0-1", "1/2-1/2" or null
-    history: { uci: string; san: string; fen: string; evaluation: EngineEvaluation | null }[]; // UCI for engine, SAN for UI, FEN, and evaluation
+    history: MoveHistory[];
 
     // Engine & Analysis
     evaluation: EngineEvaluation | null;
@@ -84,6 +103,7 @@ export interface GameState {
     }[];
     // Move navigation (replay)
     currentMoveIndex: number; // -1 means live/latest
+    currentOpening: string | null; // Current detected opening
 
     // Redo stack for redo functionality
     redoStack: { uci: string; san: string; fen: string; evaluation: EngineEvaluation | null }[];
@@ -107,18 +127,25 @@ export interface GameActions {
     setAnalyzing: (isAnalyzing: boolean) => void;
     addMistake: (mistake: GameState['mistakes'][0]) => void;
     setLastMoveAnalysis: (analysis: MoveAnalysis | null) => void;
-        /**
-         * Set the current move index for navigation/replay.
-         * @param index The move index to navigate to (-1 for latest)
-         */
-        setCurrentMoveIndex: (index: number) => void;
+    /**
+     * Set the current move index for navigation/replay.
+     * @param index The move index to navigate to (-1 for latest)
+     */
+    setCurrentMoveIndex: (index: number) => void;
 
     /**
      * Set the evaluation for a move in the history by index.
      * @param moveIndex Index of the move in history
      * @param evaluation EngineEvaluation to set
      */
-    setMoveEvaluation: (moveIndex: number, evaluation: EngineEvaluation) => void;
+    setMoveEvaluation: (
+        moveIndex: number,
+        evaluation: EngineEvaluation,
+        analysis?: MoveAnalysis | null,
+        tacticalFlags?: TacticalFlag[] | null,
+        explanation?: string | null
+    ) => void;
+    setCurrentOpening: (opening: string | null) => void;
 }
 
 // Combined Store Type
