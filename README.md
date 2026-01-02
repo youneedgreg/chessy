@@ -25,81 +25,100 @@ If Magnus Carlsen used a training app, it would feel closer to this than anythin
 ### Four Training Levels
 
 #### 🟢 Beginner — *Guided Classical Training*
-- Immediate move grading (brilliant → blunder)
-- Best move shown with arrows
-- Auto-displayed explanations
-- Tactical danger warnings
-- Evaluation bar visible
-- Undo allowed
-- Contextual micro-puzzles
+- ✅ Immediate move grading (brilliant → blunder)
+- ✅ Best move shown with arrows
+- ✅ Auto-expanded explanations with calm motivational tone
+- ✅ Tactical danger warnings
+- ✅ Evaluation bar always visible
+- ✅ Undo allowed
+- Opening detection with names displayed
 
 **Tone**: Calm, instructional, firm.
 
 ---
 
 #### 🔵 Intermediate — *Think First*
-- Grading shown, explanations hidden by default
-- Best move indicated (no arrows)
-- Optional evaluation bar
-- Limited undo
-- Puzzles only for repeated mistakes
+- ✅ Grading shown in collapsible panel (collapsed by default)
+- ✅ Click to expand for full explanations
+- ✅ No best move arrows
+- ✅ Toggle-able evaluation bar (Settings in sidebar)
+- ✅ Limited undo
+- Opening detection enabled
 
 **Tone**: Neutral, restrained.
 
 ---
 
 #### 🟠 Advanced — *Accountability Mode*
-- No evaluation bar
-- No arrows or hints
-- Feedback delayed by 1 move
-- Stronger engine play
-- Manual review access only
+- ✅ No evaluation bar
+- ✅ No arrows or hints
+- ✅ **Delayed feedback** — see your move grade only after opponent replies
+- ✅ Grade-only display (no explanations)
+- ✅ Stronger engine play
+- No undo allowed
 
 **Tone**: Cold, serious.
 
 ---
 
-#### 🔴 Professional — *Tournament Room*
-- Zero feedback during play
-- No undo
-- Engine punishes instantly
-- Full structured review only after game
+#### 🔴 Silent — *Tournament Room*
+- ✅ Zero feedback during play
+- ✅ No undo
+- ✅ Strongest engine settings
+- ✅ Full structured review only after game
 - Pure simulation of tournament conditions
 
 **Tone**: Silent. Respectful.
 
 ---
 
+### Game Export
+- ✅ **PGN Export** with standard annotations (NAGs like `?`, `!!`)
+- ✅ **JSON Export** for full game state and debugging
+- ✅ Evaluation comments (`[%eval 0.5]`) in PGN
+- ✅ Compatible with Lichess, Chess.com, and other chess software
+
+### Post-Game Review
+- ✅ Interactive move-by-move replay
+- ✅ Full analysis data and explanations
+- ✅ Move grading and tactical flags
+- ✅ Export game data (PGN/JSON)
+
+---
+
 ## Tech Stack
 
 ### Frontend
-- **Next.js 14+** (App Router)
+- **Next.js 16** (App Router with Turbopack)
 - **TypeScript** (strict mode)
 - **React 18**
 - **Zustand** for state management
-- **Tailwind CSS** (dark-mode-first)
+- **Tailwind CSS** (dark-mode-first with glassmorphism)
 
 ### Chess Engine
 - **Stockfish WASM** running in Web Worker
-- **chess.js** for move validation
-- **react-chessboard** or **chessground** for board UI
+- **chess.js** for move validation and game logic
+- **react-chessboard** for board UI with custom arrow overlays
 
 ### Explanation System
-- **Rule-based principle engine** (v1)
+- **Rule-based principle engine**
 - Maps engine evaluations + tactical patterns → clear feedback
-- AI enhancement planned for future
+- Context-aware based on game phase (opening/middlegame/endgame)
+
+### Deployment
+- **Docker** containerization
+- Production builds optimized with Next.js static export
 
 ---
 
 ## Performance Targets
 
-| Action | Target Time |
-|--------|-------------|
-| Page load | < 1 second |
-| Move legality check | Instant |
-| Engine evaluation | < 100ms |
-| Feedback render | Same frame |
-| AI explanation (future) | Async |
+| Action | Target Time | Status |
+|--------|-------------|--------|
+| Page load | < 1 second | ✅ Achieved |
+| Move legality check | Instant | ✅ Achieved |
+| Engine evaluation | < 100ms | ✅ Achieved |
+| Feedback render | Same frame | ✅ Achieved |
 
 **If feedback lags, users stop trusting it.**
 
@@ -107,11 +126,22 @@ If Magnus Carlsen used a training app, it would feel closer to this than anythin
 
 ## Quick Start
 
+### Using Docker (Recommended)
+
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/chessy.git
 cd chessy
 
+# Build and run with Docker
+docker-compose up --build
+
+# Open http://localhost:3000
+```
+
+### Local Development
+
+```bash
 # Install dependencies
 npm install
 
@@ -128,23 +158,24 @@ npm run dev
 ```
 /app
   /play          # Main game interface
-  /review        # Post-game analysis
   page.tsx       # Landing + level selection
 /components
   ChessBoard.tsx
-  FeedbackOverlay.tsx
-  ExplanationDrawer.tsx
+  FeedbackPanel.tsx
+  PostGameReview.tsx
+  EvaluationBar.tsx
 /engine
   stockfish.worker.ts
-  evaluateMove.ts
+  types.ts
 /logic
   classifyMove.ts
   principles.ts
-  tactics.ts
   explanations.ts
-/state
+  arrows.ts
+  export.ts      # PGN/JSON generation
+/store
   gameStore.ts
-  levelConfig.ts
+  types.ts
 /styles
   globals.css
 ```
@@ -153,12 +184,21 @@ npm run dev
 
 ## Development Status
 
-**Current Phase**: Foundation & Planning  
-**First Playable**: Target 5-7 days  
-**Full MVP**: Target 9-14 days
+**Current Phase**: Beta — Core Features Complete  
+**Status**: Playable with all difficulty levels implemented
 
-See [task.md](./task.md) for detailed checklist.  
-See [implementation_plan.md](./implementation_plan.md) for technical roadmap.
+### Completed Features
+- ✅ Stockfish engine integration
+- ✅ Move classification system
+- ✅ Level-based feedback (Beginner, Intermediate, Advanced, Silent)
+- ✅ Delayed feedback for Advanced level
+- ✅ Collapsible feedback panels
+- ✅ Post-game review with interactive replay
+- ✅ Game export (PGN/JSON)
+- ✅ Opening detection
+- ✅ Evaluation bar with toggle
+- ✅ Best move arrows (Beginner only)
+- ✅ Docker deployment
 
 ---
 
@@ -182,15 +222,25 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ## Roadmap
 
+### Completed ✅
 - [x] Project planning
-- [ ] Core engine integration
-- [ ] Move classification system
-- [ ] Level-based feedback
-- [ ] Post-game review
-- [ ] Puzzle extraction
-- [ ] UI polish
+- [x] Core engine integration
+- [x] Move classification system
+- [x] Level-based feedback (4 difficulty levels)
+- [x] Post-game review with export
+- [x] UI polish (glassmorphism, dark mode)
+- [x] Docker deployment
+
+### In Progress 🚧
 - [ ] Performance optimization
-- [ ] AI-enhanced explanations (future)
+- [ ] Extended opening book
+- [ ] Mistake pattern recognition
+
+### Future 🔮
+- [ ] AI-enhanced explanations
+- [ ] Personalized training plans
+- [ ] Spaced repetition for mistakes
+- [ ] Mobile app (React Native)
 
 ---
 
