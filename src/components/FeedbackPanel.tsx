@@ -9,32 +9,51 @@ interface FeedbackPanelProps {
 
 const FeedbackPanel: React.FC<FeedbackPanelProps> = ({ explanation, details = [], tactics = [], calm = true }) => {
   return (
-    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-2">
-      <h3 className="text-xs font-bold text-blue-700 mb-1">Instructional Feedback</h3>
+    <div className="p-5 glass rounded-xl mb-4 border-l-4 border-primary transition-all duration-300 hover:shadow-glow">
+      <h3 className="text-sm font-bold text-primary mb-2 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Feedback
+      </h3>
+
       {explanation && (
-        <div className="text-sm text-blue-900 mb-2">
+        <div className="text-sm text-foreground/90 mb-3 font-medium leading-relaxed">
           {explanation}
         </div>
       )}
+
       {details.length > 0 && (
-        <ul className="list-disc pl-5 text-xs text-blue-800 mb-2">
+        <ul className="space-y-1 mb-3">
           {details.map((d, i) => (
-            <li key={i}>{d}</li>
+            <li key={i} className="text-xs text-text-secondary flex items-start gap-2">
+              <span className="mt-1 w-1 h-1 rounded-full bg-secondary shrink-0"></span>
+              {d}
+            </li>
           ))}
         </ul>
       )}
+
       {tactics.length > 0 && (
-        <div className="text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded p-2 mt-2">
-          <strong>Tactical Warning:</strong>
-          <ul className="list-disc pl-5">
+        <div className="text-xs bg-error/10 border border-error/20 rounded-lg p-3 mt-3 animate-pulse">
+          <strong className="text-error mb-1 block flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            Tactical Warning
+          </strong>
+          <ul className="space-y-1 pl-1">
             {tactics.map((t, i) => (
-              <li key={i}>{t}</li>
+              <li key={i} className="text-error/80">{t}</li>
             ))}
           </ul>
         </div>
       )}
+
       {calm && (
-        <div className="text-[10px] text-blue-400 mt-2 italic">Keep learning! Every move is a chance to improve.</div>
+        <div className="text-[10px] text-primary/60 mt-3 italic text-right border-t border-white/5 pt-2">
+          "Every move is a step towards mastery."
+        </div>
       )}
     </div>
   );
