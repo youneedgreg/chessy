@@ -27,6 +27,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     mistakes: [],
     currentMoveIndex: -1, // -1 means live/latest
+    currentOpening: null, // Current detected opening
     redoStack: [],
     setCurrentMoveIndex: (index) => {
         set({ currentMoveIndex: index });
@@ -34,10 +35,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Actions
     makeMove: (source: string, target: string, promotion: string = 'q') => {
-        const { game, evaluation } = get();
+        console.log('[gameStore.makeMove] Called with:', { source, target, promotion });
+        const { game, evaluation, history } = get();
+        console.log('[gameStore.makeMove] Current state:', {
+            currentFen: game.fen(),
+            turn: game.turn(),
+            historyLength: history.length
+        });
 
         // Clone to avoid mutation issues (though chess.js is mutable, we want distinct state updates)
         const gameCopy = new Chess(game.fen());
+        console.log('[gameStore.makeMove] Created game copy with FEN:', gameCopy.fen());
 
         try {
             const move = gameCopy.move({
@@ -45,10 +53,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
                 to: target,
                 promotion: promotion,
             });
+            console.log('[gameStore.makeMove] Move result:', move);
 
             if (move) {
-                // Update state
-                set({
+                // Build new move history with richer data
+                // Simply append the new move to existing history
+                const newMoveEntry = {
+                    uci: move.lan,
+                    san: move.san,
+                    fen: gameCopy.fen(), // Current position AFTER this move
+                    evaluation: null, // Will be filled in later by engine analysis
+                    analysis: null,
+                    tacticalFlags: undefined,
+                    explanation: undefined,
+                };
+
+                const prevHistory = [...history, newMoveEntry];
+
+                const newState = {
                     game: gameCopy,
                     fen: gameCopy.fen(),
                     turn: gameCopy.turn(),
@@ -58,27 +80,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
                             ? (gameCopy.turn() === 'w' ? '0-1' : '1-0')
                             : '1/2-1/2')
                         : null,
-                    history: gameCopy.history({ verbose: true }).map((m, idx, arr) => ({
-                        uci: m.lan,
-                        san: m.san,
-                        fen: (() => {
-                            // Reconstruct FEN for each move
-                            const tempGame = new Chess();
-                            for (let i = 0; i <= idx; i++) {
-                                tempGame.move(arr[i]);
-                            }
-                            return tempGame.fen();
-                        })(),
-                        evaluation: null // To be filled after engine analysis
-                    })),
+                    history: prevHistory,
                     lastEvaluation: evaluation, // Save prev eval
                     evaluation: null, // Clear current eval until re-analysis
+                };
+
+                console.log('[gameStore.makeMove] Setting new state:', {
+                    newFen: newState.fen,
+                    newTurn: newState.turn,
+                    newHistoryLength: newState.history.length,
+                    lastMove: newMoveEntry
                 });
+
+                set(newState);
+                console.log('[gameStore.makeMove] State set successfully, returning true');
                 return true;
+            } else {
+                console.log('[gameStore.makeMove] Move was null/undefined - invalid move');
             }
         } catch (e) {
+            console.error('[gameStore.makeMove] Exception occurred:', e);
             return false;
         }
+        console.log('[gameStore.makeMove] Returning false');
         return false;
     },
 
@@ -142,6 +166,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             evaluation: null,
             lastMoveAnalysis: null,
             mistakes: [],
+            currentOpening: null,
         });
     },
 
@@ -177,11 +202,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
         set({ lastMoveAnalysis: analysis });
     },
 
-    setMoveEvaluation: (moveIndex, evaluation) => {
+    setCurrentOpening: (opening: string | null) => {
+        set({ currentOpening: opening });
+    },
+
+    setMoveEvaluation: (moveIndex, evaluation, analysis = null, tacticalFlags = null, explanation = null) => {
         set((state) => {
             if (!state.history[moveIndex]) return {};
             const updatedHistory = state.history.map((move, idx) =>
-                idx === moveIndex ? { ...move, evaluation } : move
+                idx === moveIndex
+                    ? { ...move, evaluation, analysis: analysis || move.analysis, tacticalFlags: tacticalFlags || move.tacticalFlags, explanation: explanation || move.explanation }
+                    : move
             );
             return { history: updatedHistory };
         });
