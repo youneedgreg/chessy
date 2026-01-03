@@ -12,13 +12,60 @@ import CategoryBadge from '@/components/Review/CategoryBadge';
 import { groupMistakes, getCategoryInfo, MistakeCategory, CategorizedMistake } from '@/logic/mistakeCategories';
 import ExplanationDrawer from '@/components/ExplanationDrawer';
 
+import { useState } from 'react';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import ShortcutsModal, { ShortcutDef } from '@/components/ShortcutsModal';
+
 export default function ReviewPage() {
     const {
         history,
         currentMoveIndex,
         setCurrentMoveIndex,
-        mistakes
+        mistakes,
+        undoMove,
+        redoMove
     } = useGameStore();
+
+    const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+    // Warning: ExplanationDrawer state is managed internally or by props? 
+    // Checking ExplanationDrawer usage, it seems it's currently imported but not used in the page component directly?
+    // Wait, I don't see ExplanationDrawer rendered in the previous file content I viewed. 
+    // Ah, lines 116-120 in previous view showed `currentMove.explanation`.
+    // The ExplanationDrawer component is imported but not rendered in the main page flow in the previous snippet?
+    // Let's assume we want to toggle the standard explanation UI or a drawer.
+    // For now, I'll allow Space to toggle the explanation visibility if possible, or just open/close the drawer if we implement one.
+    // Given the current code has inline explanations, maybe Space toggles `isShortcutsOpen`? No, Space is usually for Play/Pause or details.
+    // Let's stick to the plan: Space toggles Explanation Drawer. But we need to add the drawer state.
+
+    // Let's add the button at the bottom as requested.
+
+    // Handlers
+    const handleNext = () => {
+        if (currentMoveIndex < history.length - 1) {
+            setCurrentMoveIndex(currentMoveIndex + 1);
+        }
+    };
+
+    const handlePrev = () => {
+        if (currentMoveIndex >= -1) {
+            setCurrentMoveIndex(currentMoveIndex - 1);
+        }
+    };
+
+    const handleFirst = () => setCurrentMoveIndex(-1);
+    const handleLast = () => setCurrentMoveIndex(history.length - 1);
+
+    useKeyboardShortcuts({
+        onNextMove: handleNext,
+        onPrevMove: handlePrev,
+        onFirstMove: handleFirst,
+        onLastMove: handleLast,
+        onUndo: undoMove,
+        onRedo: redoMove,
+        onShowShortcuts: () => setIsShortcutsOpen(true),
+        onClose: () => setIsShortcutsOpen(false),
+        // onToggleExplanation: () => toggleExplanation() // TODO: Implement if drawer exists
+    });
 
     // Initialize review
     useEffect(() => {
@@ -27,6 +74,17 @@ export default function ReviewPage() {
         }
     }, []);
 
+    const reviewShortcuts: ShortcutDef[] = [
+        { label: "Next Move", keys: ['→'] },
+        { label: "Previous Move", keys: ['←'] },
+        { label: "Game Start", keys: ['↑'] },
+        { label: "Game End", keys: ['↓'] },
+        { label: "Undo Move", keys: ['Ctrl', 'Z'] },
+        { label: "Redo Move", keys: ['Ctrl', 'Y'] },
+        { label: "Explanation", keys: ['Space'] },
+        { label: "Close", keys: ['Esc'] },
+    ];
+
     const currentMove = currentMoveIndex >= 0 ? history[currentMoveIndex] : null;
     const groupedMistakes = groupMistakes(history);
 
@@ -34,13 +92,23 @@ export default function ReviewPage() {
 
     return (
         <div className="min-h-screen bg-neutral-900 text-white p-4 md:p-8 flex flex-col items-center">
+            <ShortcutsModal open={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} shortcuts={reviewShortcuts} />
+
             <header className="w-full max-w-6xl flex justify-between items-center mb-8">
                 <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                     Game Analysis
                 </h1>
-                <Link href="/play" className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm">
-                    Back to Game
-                </Link>
+                <div className="flex gap-4">
+                    <button
+                        onClick={() => setIsShortcutsOpen(true)}
+                        className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-sm text-gray-400 flex items-center gap-2"
+                    >
+                        <span className="text-xs bg-white/10 px-1.5 py-0.5 rounded">?</span> Shortcuts
+                    </button>
+                    <Link href="/play" className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm">
+                        Back to Game
+                    </Link>
+                </div>
             </header>
 
             <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-8 h-full flex-grow">
@@ -77,7 +145,7 @@ export default function ReviewPage() {
                                 ${currentMove.analysis.grade === 'blunder' ? 'bg-red-500/20 text-red-400 border border-red-500/40' :
                                             currentMove.analysis.grade === 'mistake' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40' :
                                                 currentMove.analysis.grade === 'brilliant' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/40' :
-                                                    'bg-gray-500/20 text gray-400'}
+                                                    'bg-gray-500/20 text-gray-400'}
                             `}>
                                         {currentMove.analysis.grade}
                                     </div>
@@ -147,6 +215,16 @@ export default function ReviewPage() {
                         No mistakes or blunders detected. Great job!
                     </div>
                 )}
+            </div>
+
+            <div className="w-full max-w-6xl mt-8 flex justify-center pb-8">
+                <button
+                    onClick={() => setIsShortcutsOpen(true)}
+                    className="flex items-center gap-2 px-6 py-3 bg-neutral-800 hover:bg-neutral-700 border border-white/10 rounded-full transition-all text-sm font-medium text-gray-400 hover:text-white"
+                >
+                    <span className="bg-white/10 w-5 h-5 flex items-center justify-center rounded text-xs">?</span>
+                    Show Keyboard Shortcuts
+                </button>
             </div>
         </div>
     );
