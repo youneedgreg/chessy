@@ -121,7 +121,7 @@ export default function ChessBoard({
                 width="100%"
                 height="100%"
                 viewBox="0 0 8 8"
-                style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
+                style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', zIndex: 50 }}
             >
                 {arrows.map((arrow, idx) => {
                     // ...existing code...
@@ -166,13 +166,24 @@ export default function ChessBoard({
                             >
                                 <polygon points="0,0 0.5,0.25 0,0.5 0.12,0.25" fill={arrow.color} />
                             </marker>
+                            {/* Animated Pulse Effect for Best Move Arrow */}
+                            {arrow.style !== 'dashed' && (
+                                <circle cx={x2} cy={y2} r="0.15" fill={arrow.color} opacity="0.5">
+                                    <animate attributeName="r" from="0.1" to="0.3" dur="1.5s" repeatCount="indefinite" />
+                                    <animate attributeName="opacity" from="0.6" to="0" dur="1.5s" repeatCount="indefinite" />
+                                </circle>
+                            )}
                         </g>
                     );
                 })}
                 {/* SVG filter for subtle glow */}
                 <defs>
                     <filter id="arrow-glow" x="-50%" y="-50%" width="200%" height="200%">
-                        <feDropShadow dx="0" dy="0" stdDeviation="0.07" floodColor="#000" floodOpacity="0.18" />
+                        <feGaussianBlur stdDeviation="0.05" result="coloredBlur" />
+                        <feMerge>
+                            <feMergeNode in="coloredBlur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
                     </filter>
                 </defs>
             </svg>
