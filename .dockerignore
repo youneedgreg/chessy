@@ -1,0 +1,17 @@
+# Ignore node modules locally
+node_modules
+
+# Ignore logs
+npm-debug.log
+
+# Ignore Next.js build output (will be copied from builder)
+.next
+dist
+
+# Ignore git files
+.git
+.gitignore
+
+# Ignore Docker-related files to avoid recursion
+Dockerfile
+docker-compose.yml
