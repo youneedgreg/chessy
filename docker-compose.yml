@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  chessy:
+    # Build from local Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Map container port 3000 to local machine
+    ports:
+      - "3000:3000"
+    # Mount local code for hot-reload
+    volumes:
+      - .:/app
+      - /app/node_modules  # preserve container modules
+    # Run Next.js dev server inside container
+    command: npm run dev
+    environment:
+      NODE_ENV: development
