@@ -305,7 +305,7 @@ function PlayContent() {
                 </main>
 
                 {/* Sidebar */}
-                <aside className="flex flex-col w-full lg:w-96 h-[35vh] lg:h-full glass border-l border-white/5 p-6 z-20 shadow-xl transition-all duration-300">
+                <aside className="flex flex-col w-full lg:w-96 h-[35vh] lg:h-full glass border-l border-white/5 p-6 z-20 shadow-xl transition-all duration-300 overflow-y-auto custom-scrollbar">
                     {/* Feedback Panel Logic 
                         - Beginner: Always show (if explanation exists), expanded.
                         - Intermediate: Always show, collapsed.
@@ -414,7 +414,7 @@ function PlayContent() {
                     </div>
 
                     {/* History */}
-                    <div className="flex-1 overflow-y-auto bg-black/20 rounded-xl p-4 text-sm font-mono text-text-secondary border border-white/5 shadow-inner custom-scrollbar">
+                    <div className="flex-shrink-0 bg-black/20 rounded-xl p-4 text-sm font-mono text-text-secondary border border-white/5 shadow-inner">
                         <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
                             <h3 className="text-[10px] uppercase tracking-widest opacity-70 font-bold">Move History</h3>
                             <span className="text-[10px] opacity-40">{history.length / 2} Moves</span>
