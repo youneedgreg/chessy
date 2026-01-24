@@ -1,0 +1,167 @@
+name: Auto Create Issues
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "issues.md"
+
+jobs:
+  create-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Issues from issues.md
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            // Read the issues.md file
+            let content;
+            try {
+              content = fs.readFileSync('issues.md', 'utf8');
+            } catch (error) {
+              console.log('No issues.md found or readable.');
+              return;
+            }
+
+            // Simple parser for YAML-like blocks separated by ---
+            // We implement a custom parser to avoid external dependencies like js-yaml
+            const blocks = content.split(/^---$/m);
+
+            // Helper to parse a single block
+            // Returns: { title, description, labels: [] } or null if invalid
+            function parseBlock(block) {
+                if (!block || !block.trim()) return null;
+                
+                const lines = block.split('\n');
+                let title = null;
+                let description = '';
+                let labels = [];
+                
+                let mode = 'none'; // 'description', 'labels', 'none'
+                let indentRef = 0;
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    // Skip comments
+                    if (line.trim().startsWith('#') || line.trim().startsWith('<!--')) continue;
+                    
+                    if (mode === 'description') {
+                        // Check if we hit a new top-level key (assuming no indentation for keys)
+                        // STRICT: Keys must start at the beginning of the line
+                        if (line.match(/^(title|description|labels):/)) {
+                             mode = 'none';
+                             // Fallthrough to process this line as a key
+                        } else {
+                            // Still in description
+                            description += line + '\n';
+                            continue;
+                        }
+                    }
+
+                    if (mode === 'labels') {
+                        if (line.trim().startsWith('-')) {
+                            labels.push(line.trim().replace(/^-\s*/, '').trim());
+                            continue;
+                        } else if (line.match(/^[a-z]+:/) && !line.startsWith(' ')) {
+                             mode = 'none';
+                        } else if (line.trim() === '') {
+                             continue;
+                        } else {
+                             // Unexpected content in labels or end of labels
+                             mode = 'none';
+                        }
+                    }
+
+                    const titleMatch = line.match(/^title:\s*(.*)$/);
+                    if (titleMatch) {
+                        title = titleMatch[1].trim();
+                        continue;
+                    }
+                    
+                    const descMatch = line.match(/^description:\s*[|>]?$/);
+                    if (descMatch) {
+                        mode = 'description';
+                        continue;
+                    }
+                    
+                    // Handle inline description "description: something"
+                     const descInlineMatch = line.match(/^description:\s+(.+)$/);
+                    if (descInlineMatch) {
+                        description = descInlineMatch[1].trim();
+                        continue;
+                    }
+
+                    const labelsMatch = line.match(/^labels:$/);
+                    if (labelsMatch) {
+                        mode = 'labels';
+                        continue;
+                    }
+                }
+                
+                if (!title) return null;
+                
+                // Add 'good first issue' label automatically
+                if (!labels.includes('good first issue')) {
+                    labels.unshift('good first issue');
+                }
+                
+                return { 
+                    title, 
+                    body: description.trim(), 
+                    labels 
+                };
+            }
+
+            // Parse all blocks
+            const parsedIssues = blocks.map(parseBlock).filter(i => i !== null);
+
+            if (parsedIssues.length === 0) {
+                console.log('No valid issues found in issues.md');
+                return;
+            }
+
+            console.log(`Found ${parsedIssues.length} potentially new issues.`);
+
+            // Get all OPEN issues to check for duplicates
+            // We paginate to get a reasonable number, but for a growing project this might need
+            // to be more robust (searching by title).
+            // Searching by title is better.
+
+            for (const issue of parsedIssues) {
+                // Check if issue exists
+                const existingIssues = await github.rest.search.issuesAndPullRequests({
+                    q: `repo:${context.repo.owner}/${context.repo.repo} is:issue state:open "${issue.title.replace(/"/g, '\\"')}" in:title`
+                });
+
+                const exists = existingIssues.data.items.some(existing => existing.title === issue.title);
+
+                if (exists) {
+                    console.log(`Skipping existing issue: "${issue.title}"`);
+                    continue;
+                }
+
+                console.log(`Creating issue: "${issue.title}"`);
+                
+                try {
+                    await github.rest.issues.create({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        title: issue.title,
+                        body: issue.body,
+                        labels: issue.labels
+                    });
+                     console.log(`Successfully created issue: "${issue.title}"`);
+                } catch (err) {
+                    console.log(`Failed to create issue: "${issue.title}"`);
+                    console.log(err);
+                }
+            }
