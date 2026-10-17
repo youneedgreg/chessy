@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { notFound } from 'next/navigation';
 import { engineService } from '@/engine/evaluateMove';
 import { debug } from '@/logic/debug';
 import { EngineEvaluation } from '@/engine/types';
+import { isEngineDiagnosticsEnabled } from './gate';
 
 export default function TestEnginePage() {
     const [fen, setFen] = useState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
@@ -33,6 +35,10 @@ export default function TestEnginePage() {
             setLoading(false);
         }
     };
+
+    if (!isEngineDiagnosticsEnabled(process.env.NODE_ENV)) {
+        notFound();
+    }
 
     return (
         <div className="p-8 max-w-2xl mx-auto space-y-6">
